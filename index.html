@@ -96,6 +96,26 @@
   .lnk .tx .s { font-size:12.5px; font-weight:600; color:var(--faint); margin-top:3px; line-height:1.35; }
   .lnk .chev { flex:none; margin-inline-start:auto; color:var(--faint); font-size:20px; transition:transform .2s, color .2s; }
   .lnk:hover .chev { transform:translateX(-3px); color:var(--brand); }
+
+  /* ===== courses accordion ===== */
+  .acc { position:relative; }
+  .acc-trigger { width:100%; font-family:"Cairo",sans-serif; }
+  .acc-arrow { transform:rotate(-90deg); transition:transform .3s ease, color .2s; }
+  .acc.open .acc-arrow { transform:rotate(90deg); color:var(--brand); }
+  .acc.open .acc-trigger { border-color:var(--brand); background:#fff; box-shadow:0 12px 26px -14px rgba(27,70,245,.4); }
+  .acc-panel { max-height:0; overflow:hidden; transition:max-height .38s cubic-bezier(.16,1,.3,1); }
+  .acc-inner { display:flex; flex-direction:column; gap:9px; padding:11px 6px 3px; }
+  .course { display:flex; align-items:center; gap:12px; text-decoration:none; text-align:right;
+    background:#fff; border:1.5px solid var(--line-2); border-radius:15px; padding:12px 14px;
+    transition:border-color .18s, transform .14s, box-shadow .2s, background .18s; }
+  .course:hover { border-color:var(--wa-2); background:rgba(34,197,94,.05); transform:translateX(-3px); box-shadow:0 10px 20px -14px rgba(34,197,94,.5); }
+  .course:active { transform:scale(.98); }
+  .course .c-emoji { flex:none; width:38px; height:38px; border-radius:11px; display:grid; place-items:center;
+    font-size:19px; background:var(--soft); border:1px solid var(--line-2); }
+  .course .c-tx { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .course .c-t { font-size:14.5px; font-weight:800; color:var(--ink); line-height:1.3; }
+  .course .c-s { font-size:12px; font-weight:600; color:var(--faint); margin-top:2px; line-height:1.3; }
+  .course .c-go { flex:none; margin-inline-start:auto; color:var(--wa-2); font-size:18px; }
   /* featured (first) */
   .lnk.feat { background:linear-gradient(150deg,#fff,#f2f5ff); border-color:rgba(27,70,245,.3); }
   .lnk.feat::after { content:""; position:absolute; top:0; bottom:0; width:38%; left:-60%;
@@ -134,10 +154,10 @@
   .brandbar img { animation:logoIn .7s cubic-bezier(.16,1,.3,1) both; }
   @keyframes logoIn { from{opacity:0; transform:translateY(-14px) scale(.9)} to{opacity:1; transform:none} }
   /* header pieces + buttons rise in, staggered */
-  .badge, .lead, .lnk, .soc-label, .soc { opacity:0; animation:riseIn .6s cubic-bezier(.16,1,.3,1) forwards; }
+  .badge, .lead, .links > *, .soc-label, .soc { opacity:0; animation:riseIn .6s cubic-bezier(.16,1,.3,1) forwards; }
   .badge { animation-delay:.10s } .lead { animation-delay:.16s }
-  .lnk:nth-child(1){ animation-delay:.24s } .lnk:nth-child(2){ animation-delay:.32s }
-  .lnk:nth-child(3){ animation-delay:.40s } .lnk:nth-child(4){ animation-delay:.48s }
+  .links > *:nth-child(1){ animation-delay:.24s } .links > *:nth-child(2){ animation-delay:.32s }
+  .links > *:nth-child(3){ animation-delay:.40s } .links > *:nth-child(4){ animation-delay:.48s }
   .soc-label{ animation-delay:.54s }
   .soc:nth-child(1){ animation-delay:.60s } .soc:nth-child(2){ animation-delay:.68s } .soc:nth-child(3){ animation-delay:.76s }
   @keyframes riseIn { from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:none} }
@@ -167,7 +187,7 @@
   @media (max-width:380px){ .brandbar img{height:46px} .inner{padding:20px 16px 22px} .lnk .tx .t{font-size:14.5px} }
   @media (prefers-reduced-motion:reduce){
     .blob,.badge .pip::after,.lnk.feat::after,.lnk.feat,.lnk.feat .ic,.brandbar img,
-    .badge,.lead,.lnk,.soc-label,.soc{ animation:none!important; opacity:1!important; }
+    .badge,.lead,.links > *,.soc-label,.soc{ animation:none!important; opacity:1!important; }
   }
 </style>
 </head>
@@ -207,11 +227,27 @@
     whatsappNumber: "966567086238",     // official WhatsApp for this bio page
     speakingTestUrl:"https://speaking.zedlevel.app/",
     websiteUrl:     "https://zedlevel.com",
-    courseUrl:      "https://wa.me/966567086238?text=" + encodeURIComponent("مرحباً 👋 أرغب بالاستفسار عن دورات ZedLevel."),
     instagramUrl:   "https://www.instagram.com/zedlevel",
     tiktokUrl:      "https://www.tiktok.com/@zedlevel.official",
     telegramUrl:    "https://t.me/zedlevel_help"
   };
+
+  /* Courses shown inside the "اسأل عن الدورات" accordion.
+     Each opens WhatsApp with its own pre-filled message so you
+     instantly know which course the student is asking about.
+     Add more courses here later — set enabled:false to hide. */
+  const COURSES = [
+    { emoji:"📘", name:"الدورة التأسيسية", desc:"للمبتدئين — أساسيات قوية من الصفر", enabled:true,
+      msg:"مرحباً 👋 أرغب بالاستفسار عن (الدورة التأسيسية)." },
+    { emoji:"📊", name:"دورة المستويات",   desc:"تدرّج حسب مستواك خطوة بخطوة", enabled:true,
+      msg:"مرحباً 👋 أرغب بالاستفسار عن (دورة المستويات)." },
+    { emoji:"🗣️", name:"دورة المحادثة",    desc:"تحدّث بطلاقة وثقة", enabled:true,
+      msg:"مرحباً 👋 أرغب بالاستفسار عن (دورة المحادثة)." }
+    /* future ready-to-add examples:
+    ,{ emoji:"🇺🇸", name:"دورة اللكنة الأمريكية", desc:"American accent", enabled:false, msg:"..." }
+    ,{ emoji:"🎓", name:"دورة STEP",            desc:"اختبار ستيب",     enabled:false, msg:"..." }
+    */
+  ];
 
   /* --- SVG icons --- */
   const ICONS = {
@@ -228,7 +264,7 @@
   /* --- INSIDE the card: lead / sales actions only (marketing titles) --- */
   const BUTTONS = [
     { key:"speaking", cls:"ic-speaking", feat:true, enabled:true, title:"جرّب اختبار المحادثة 🎤", sub:"قيّم مستواك في الإنجليزية مجاناً الآن", href:CONFIG.speakingTestUrl, ext:true },
-    { key:"wa",       cls:"ic-wa",      enabled:true, title:"اسأل عن الدورات 📚", sub:"استفسر واحجز مقعدك عبر واتساب", href:CONFIG.courseUrl, ext:true },
+    { key:"wa",       cls:"ic-wa",      enabled:true, accordion:true, title:"اسأل عن الدورات 📚", sub:"اختر دورتك — نرد عليك عبر واتساب" },
     { key:"web",      cls:"ic-web",     enabled:true, title:"زيارة الموقع الرسمي 🌐", sub:"zedlevel.com", href:CONFIG.websiteUrl, ext:true }
   ];
 
@@ -240,7 +276,27 @@
   ];
 
   /* --- render --- */
+  function waLink(msg){ return "https://wa.me/"+CONFIG.whatsappNumber+"?text="+encodeURIComponent(msg); }
+
   document.getElementById("links").innerHTML = BUTTONS.filter(function(b){ return b.enabled; }).map(function(b){
+    if(b.accordion){
+      // build the courses panel
+      var items = COURSES.filter(function(c){ return c.enabled; }).map(function(c){
+        return '<a class="course" href="'+waLink(c.msg)+'" target="_blank" rel="noopener">'+
+                 '<span class="c-emoji">'+c.emoji+'</span>'+
+                 '<span class="c-tx"><span class="c-t">'+c.name+'</span><span class="c-s">'+c.desc+'</span></span>'+
+                 '<span class="c-go">‹</span>'+
+               '</a>';
+      }).join("");
+      return '<div class="acc" id="acc">'+
+               '<button class="lnk acc-trigger" id="accBtn" type="button" aria-expanded="false">'+
+                 '<span class="ic '+b.cls+'">'+ICONS[b.key]+'</span>'+
+                 '<span class="tx"><span class="t">'+b.title+'</span><span class="s">'+b.sub+'</span></span>'+
+                 '<span class="chev acc-arrow">‹</span>'+
+               '</button>'+
+               '<div class="acc-panel" id="accPanel"><div class="acc-inner">'+items+'</div></div>'+
+             '</div>';
+    }
     var attrs = b.ext ? ' target="_blank" rel="noopener"' : '';
     return '<a class="lnk'+(b.feat?' feat':'')+'" href="'+b.href+'"'+attrs+'>'+
              '<span class="ic '+b.cls+'">'+ICONS[b.key]+'</span>'+
@@ -252,6 +308,17 @@
   document.getElementById("socials").innerHTML = SOCIALS.filter(function(s){ return s.enabled; }).map(function(s){
     return '<a class="soc s-'+s.key+'" href="'+s.href+'" target="_blank" rel="noopener" aria-label="'+s.label+'">'+ICONS[s.key]+'</a>';
   }).join("");
+
+  /* accordion toggle */
+  (function(){
+    var acc=document.getElementById("acc"); if(!acc) return;
+    var btn=document.getElementById("accBtn"), panel=document.getElementById("accPanel");
+    btn.addEventListener("click",function(){
+      var open=acc.classList.toggle("open");
+      btn.setAttribute("aria-expanded", open?"true":"false");
+      panel.style.maxHeight = open ? (panel.scrollHeight+"px") : "0px";
+    });
+  })();
 
   document.getElementById("year").textContent = new Date().getFullYear();
 </script>
